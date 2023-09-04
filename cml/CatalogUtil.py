@@ -1,4 +1,6 @@
 import boto3
+from IPython.display import JSON
+import json
 
 class CatalogUtil():
     '''
@@ -10,7 +12,7 @@ class CatalogUtil():
     
     '''
     
-    def __init__(self, CATALOG_NAME, TABLE_NAME, BUCKET)
+    def __init__(self, CATALOG_NAME, TABLE_NAME, BUCKET, BOTORESOURCE):
     
         self.CATALOG_NAME = CATALOG_NAME
         self.CATALOG_PATH = "warehouse/tablespace/external/hive/{}.db/".format(CATALOG_NAME)
@@ -19,8 +21,8 @@ class CatalogUtil():
         self.TABLE_METADATA_PATH = self.CATALOG_PATH + self.TABLE_NAME + '/metadata'
         self.TABLE_DATA_PATH = self.CATALOG_PATH + self.TABLE_NAME + '/data'
         
-        self.s3 = boto3.resource('s3')
-        self.my_bucket = s3.Bucket(BUCKET)
+        self.s3 = boto3.resource(BOTORESOURCE)
+        self.my_bucket = self.s3.Bucket(BUCKET)
 
     def get_all_metadata_files(self):
         '''method to get the full path of all metdata files in the metadata layer
@@ -30,7 +32,7 @@ class CatalogUtil():
         
         file_list = []
         
-        for object_summary in my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
+        for object_summary in self.my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
             if '.json' in object_summary.key:
                 file_list.append(object_summary.key)
                 print("Metadata File Path: {}".format(object_summary.key))
@@ -45,7 +47,7 @@ class CatalogUtil():
         
         file_list = []
         
-        for object_summary in my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
+        for object_summary in self.my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
             if '.json' in object_summary.key:
                 file_list.append(object_summary.key)
                 print("Metadata File Path: {}".format(object_summary.key))
@@ -59,7 +61,7 @@ class CatalogUtil():
         
         file_list = []
         
-        for object_summary in my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
+        for object_summary in self.my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
             if 'snap' in object_summary.key:
                 file_list.append(object_summary.key)
                 print("Metadata File Path: {}".format(object_summary.key))
@@ -81,7 +83,7 @@ class CatalogUtil():
         
         file_list = []
 
-        for object_summary in my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
+        for object_summary in self.my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
             #print(object_summary.key)
             if 'avro' in object_summary.key and 'snap' not in object_summary.key:
                 file_list.append(object_summary.key)
@@ -96,7 +98,7 @@ class CatalogUtil():
         
         file_list = []
         
-        for object_summary in my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
+        for object_summary in self.my_bucket.objects.filter(Prefix=self.TABLE_METADATA_PATH):
             file_list.append(object_summary.key)
             print("Metadata File Path: {}".format(object_summary.key))
         
@@ -108,9 +110,10 @@ class CatalogUtil():
         '''
         file_list = []
 
-        for object_summary in my_bucket.objects.filter(Prefix=self.TABLE_DATA_PATH):
-            file_list.append(object_summary.key)
-            print("Data File Path: {}".format(object_summary.key))
+        for object_summary in self.my_bucket.objects.filter(Prefix=self.TABLE_DATA_PATH):
+            if '.parquet' in object_summary.key:
+                file_list.append(object_summary.key)
+                print("Data File Path: {}".format(object_summary.key))
 
         return file_list
     
@@ -173,3 +176,36 @@ class CatalogUtil():
         '''
         
         return NotImplemented
+    
+    def print_metadata_file(self, spark, metadata_file_path):
+        '''
+        Method to read iceberg metadata files and output contents in pretty format.
+        The method is compatible with iceberg metadata files only which are in json format.
+        Expects only one metadata file path without the S3 and bucket prefix.
+        '''
+        
+        json = spark.read.option("multiline","true").json("s3a://go01-demo/" + metadata_file_path).toJSON().collect()[0]
+        
+        return JSON(json)
+    
+    def print_manifest_file(self, spark, metadata_file_path):
+        '''
+        Method to read any file in the metadata layer and output contents in pretty format.
+        The method is compatible with iceberg manifest lists and manifest files but not iceberg metadata files. Manifest lists and files are in Avro format only.
+        Expects only one metadata file path without the S3 and bucket prefix.
+        '''
+        json = spark.read.format("avro").load("s3a://go01-demo/" + metadata_file_path).toJSON().collect()[0]
+        #json = spark.read.option("multiline","true").json("s3a://go01-demo/" + metadata_file_path).toJSON().collect()[0]
+
+        return JSON(json)
+    
+    def print_data_file(self, spark, data_file_path):
+        '''
+        Method to read any file in the data layer and output contents in pretty format.
+        The method is compatible with parquet files.
+        Expects only one data file path without the S3 and bucket prefix.
+        '''
+        
+        spark.read.parquet("s3a://go01-demo/" + data_file_path).show()
+        
+        return None

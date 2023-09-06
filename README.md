@@ -20,14 +20,31 @@ To learn more about the Apache Iceberg Open Source project and its role in the C
 
 ##### Iceberg Catalog
 
+The Catalog tracks Iceberg tables and provides an entry point for data access to End Users and Compute Engines.
+
+The Iceberg Catalog has two primary requirements: supporting atomic operations for updating the current metadata pointer and providing a reference or pointer for each table to that table’s current metadata file. In CDP the Iceberg Catalog is the Hive Metastore associated with the CDP Environment.
+
 ##### Iceberg Metadata Layer
+
+The metadata layer contains all of the metadata files for an Iceberg table. It’s a tree structure that tracks the data files and metadata about them as well as the operations that made them. This tree structure is made up of three file types, all of which are stored in data lake storage: manifest files, manifest lists, and metadata files.
 
 ##### Iceberg Data Layer
 
+The data layer of an Apache Iceberg table is what stores the actual data of the table. It includes three types of files: Data Files, Delete Files and Puffin Files. Parquet, ORC and Avro are currently supported. In real-world usage, the data layer is backed by HDFS, Amazon S3, Azure Storage, or Google Cloud Storage.
+
 ##### Iceberg Snapshots
 
-##### Iceberg and Spark
+A snapshot of the data in a table at a point in time.
 
+A snapshot consist of one or more file manifests, and the complete table contents is the union of all the data files in those manifests.
+
+##### Iceberg Partitioning
+
+The Iceberg partitioning technique has performance advantages over conventional partitioning, such as Apache Hive partitioning. Iceberg hidden partitioning is easier to use. Iceberg supports in-place partition evolution; to change a partition, you do not rewrite the entire table to add a new partition column, and queries do not need to be rewritten for the updated table. Iceberg continuously gathers data statistics, which supports additional optimizations, such as partition pruning.
+
+Iceberg uses multiple layers of metadata files to find and prune data. Hive and Impala keep track of data at the folder level and not at the file level, performing file list operations when working with data in a table. Performance problems occur during the execution of multiple list operations. Iceberg keeps track of a complete list of files within a table using a persistent tree structure. Changes to an Iceberg table use an atomic object/file level commit to update the path to a new snapshot file. The snapshot points to the individual data files through manifest files.
+
+![alt text](img/iceberg-tree.png)
 
 ## Requirements
 

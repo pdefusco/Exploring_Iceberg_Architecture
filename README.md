@@ -14,7 +14,7 @@ To satisfy multi-function analytics over large datasets with the flexibility off
 
 To learn more about the Apache Iceberg Open Source project and its role in the Cloudera Data Platform please visit this in-depth [Cloudera Blog article](https://blog.cloudera.com/introducing-apache-iceberg-in-cloudera-data-platform/).
 
-![alt text](../../img/iceberg-metadata.png)
+![alt text](img/iceberg-metadata.png)
 
 ## Relevant Iceberg Concepts
 
@@ -48,7 +48,7 @@ Enable Spark: Spark 3.2.0 and above ok
 Resource Profile: 2vCPU / 4GiB Memory - 0 GPU
 ```
 
-The notebooks are named and are meant to be run in numerical order. The CatalogUtil module was created to allow you to interact with the Iceberg Metadata and Data Layers more easily. No code changes are required. Further instructions are included in the notebooks. Please run them all and follow instructions provided as you go. 
+The notebooks are named and are meant to be run in numerical order. The CatalogUtil module was created to allow you to interact with the Iceberg Metadata and Data Layers more easily. No code changes are required. Further instructions are included in the notebooks. Please run them all and follow instructions provided as you go.
 
 ### Conclusions
 
